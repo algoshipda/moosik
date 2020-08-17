@@ -9,6 +9,30 @@ class FileHelper {
   String _dbFileName;
   FileHelper(this._dbFileName);
 
+  Future<String> get _dbFilePath async =>
+      join((await getApplicationSupportDirectory()).path, _dbFileName);
+
+  Future<String> _getDbFile() async {
+    String path = await _dbFilePath;
+    File file = new File(path);
+    if (!file.existsSync()) {
+      throw DbFileNotExists();
+    }
+
+    return file.readAsString();
+  }
+
+  Future<void> _ensureDbFile() async {
+    String path = await _dbFilePath;
+    File file = new File(path);
+    if (!file.existsSync()) {
+      await file.writeAsString(
+        jsonEncode([]),
+      );
+      file.createSync(recursive: true);
+    }
+  }
+
   Future<List<String>> getWatchingFolders() async {
     await _ensureDbFile();
 
@@ -24,33 +48,20 @@ class FileHelper {
     await file.writeAsString(jsonEncode(watchingFolders));
   }
 
-  Future<String> get _dbFilePath async =>
-      join((await getApplicationSupportDirectory()).path, _dbFileName);
-
-  Future<void> _ensureDbFile() async {
-    String path = await _dbFilePath;
-    File file = new File(path);
-    if (!file.existsSync()) {
-      await file.writeAsString(
-        jsonEncode([]),
-      );
-      file.createSync(recursive: true);
-    }
-  }
-
   Future<void> addFolder(String folderPath) async {
     List<String> watchingFolders = await getWatchingFolders();
     watchingFolders.add(folderPath);
     await _writeWatchingFolders(watchingFolders);
   }
 
-  Future<String> _getDbFile() async {
-    String path = await _dbFilePath;
-    File file = new File(path);
-    if (!file.existsSync()) {
-      throw DbFileNotExists();
-    }
+  Future<void> removeFolder(String folderPath) async {
+    List<String> watchingFolders = await getWatchingFolders();
+    watchingFolders.remove(folderPath);
+    await _writeWatchingFolders(watchingFolders);
+  }
 
-    return file.readAsString();
+  Future<bool> existsFolder(String folderPath) async {
+    List<String> folders = await getWatchingFolders();
+    return folders.contains(folderPath);
   }
 }

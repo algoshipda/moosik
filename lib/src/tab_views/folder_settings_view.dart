@@ -63,9 +63,8 @@ class _FolderSettingsViewState extends State<FolderSettingsView> {
     _syncFolder();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> folderWidgets = _folders.map((folder) {
+  Widget renderFolderList(List<String> folders) {
+    List<Widget> folderWidgets = folders.map((folder) {
       return ListTile(
         title: Text(folder),
         trailing: IconButton(
@@ -78,30 +77,39 @@ class _FolderSettingsViewState extends State<FolderSettingsView> {
         ),
       );
     }).toList();
+    return ListView(
+      children: folderWidgets,
+    );
+  }
+
+  void onAddFolderPressed() async {
+    String txt = await showDialog(
+      context: context,
+      builder: (context) {
+        return PromptDialog(
+          title: 'Input Folder Path',
+          hintText: 'Enter a Folder Path',
+        );
+      },
+    );
+    if (txt != null) {
+      await _addFolder(txt);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    FloatingActionButton addFolderButton = FloatingActionButton(
+      onPressed: onAddFolderPressed,
+      tooltip: "Add Folder",
+      child: Icon(
+        Icons.add,
+      ),
+    );
+
     return Scaffold(
-      body: ListView(
-        children: folderWidgets,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          String txt = await showDialog(
-            context: context,
-            builder: (context) {
-              return PromptDialog(
-                title: 'Input Folder Path',
-                hintText: 'Enter a Folder Path',
-              );
-            },
-          );
-          if (txt != null) {
-            await _addFolder(txt);
-          }
-        },
-        tooltip: "Add Folder",
-        child: Icon(
-          Icons.add,
-        ),
-      ),
+      body: renderFolderList(_folders),
+      floatingActionButton: addFolderButton,
     );
   }
 }
